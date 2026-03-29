@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 import { Search, Package, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -28,30 +27,20 @@ export default function GuestOrderLookupPage() {
     setLoading(true);
 
     try {
-      const supabase = createClient();
+      const res = await fetch("/api/orders/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, email }),
+      });
+      const payload = await res.json();
 
-      // Lookup order by ID and guest email
-      const { data: orderData, error: orderError } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("id", orderId)
-        .eq("guest_email", email)
-        .single();
-
-      if (orderError || !orderData) {
+      if (!res.ok || !payload.order) {
         setError("Order not found. Please check your email and order ID.");
         return;
       }
 
-      setOrder(orderData);
-
-      // Get order items
-      const { data: items } = await supabase
-        .from("order_items")
-        .select("*")
-        .eq("order_id", orderId);
-
-      setOrderItems(items || []);
+      setOrder(payload.order);
+      setOrderItems(payload.items || []);
     } catch (err: any) {
       setError("Failed to lookup order. Please try again.");
     } finally {
@@ -142,16 +131,22 @@ export default function GuestOrderLookupPage() {
               </div>
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Name:</dt>
-                <dd className="font-medium text-foreground">{order.guest_name}</dd>
+                <dd className="font-medium text-foreground">
+                  {order.guest_name}
+                </dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Email:</dt>
-                <dd className="font-medium text-foreground">{order.guest_email}</dd>
+                <dd className="font-medium text-foreground">
+                  {order.guest_email}
+                </dd>
               </div>
               {order.guest_phone && (
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Phone:</dt>
-                  <dd className="font-medium text-foreground">{order.guest_phone}</dd>
+                  <dd className="font-medium text-foreground">
+                    {order.guest_phone}
+                  </dd>
                 </div>
               )}
               <div className="flex justify-between">
@@ -181,8 +176,13 @@ export default function GuestOrderLookupPage() {
                     className="flex items-center justify-between text-sm"
                   >
                     <div>
-                      <span className="text-foreground">{item.product_name}</span>
-                      <span className="text-muted-foreground"> x{item.quantity}</span>
+                      <span className="text-foreground">
+                        {item.product_name}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {" "}
+                        x{item.quantity}
+                      </span>
                     </div>
                     <span className="font-medium text-foreground">
                       {formatCurrency(item.price_in_cents * item.quantity)}

@@ -1,5 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
 import { query } from "@/lib/database/client";
+import {
+  getPickupInventory,
+  getRegionInventory,
+} from "@/lib/database/public-data";
 import { siteConfig } from "@/lib/site-config";
 import { notFound } from "next/navigation";
 import { ProductDetail } from "./product-detail";
@@ -52,13 +55,12 @@ export default async function ProductPage({ params }: Props) {
   const product = products[0];
   if (!product) notFound();
 
-  // Fetch inventory from Supabase (for now)
-  const supabase = await createClient();
-  const [{ data: regionInventory }, { data: pickupInventory }] =
-    await Promise.all([
-      supabase.from("region_inventory").select("*").eq("sku", sku),
-      supabase.from("pickup_inventory").select("*").eq("sku", sku),
-    ]);
+  const [regionInventoryAll, pickupInventoryAll] = await Promise.all([
+    getRegionInventory(),
+    getPickupInventory(),
+  ]);
+  const regionInventory = regionInventoryAll.filter((row) => row.sku === sku);
+  const pickupInventory = pickupInventoryAll.filter((row) => row.sku === sku);
 
   // Get related products from the same category (VPS PostgreSQL)
   let related = [];

@@ -1,5 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
 import { query } from "@/lib/database/client";
+import {
+  getActivePickupLocations,
+  getActiveRegions,
+  getPickupInventory,
+  getRegionInventory,
+} from "@/lib/database/public-data";
 import { siteConfig } from "@/lib/site-config";
 import { ShopContent } from "./shop-content";
 import type { Metadata } from "next";
@@ -60,20 +65,13 @@ export default async function ShopPage({
     // Continue with empty array
   }
 
-  // Fetch regions, locations, and inventory from Supabase (for now)
-  // TODO: Migrate these to VPS PostgreSQL once regions/inventory data is populated
-  const supabase = await createClient();
-  const [
-    { data: regions },
-    { data: pickupLocations },
-    { data: regionInventory },
-    { data: pickupInventory },
-  ] = await Promise.all([
-    supabase.from("regions").select("*").eq("is_active", true),
-    supabase.from("pickup_locations").select("*").eq("is_active", true),
-    supabase.from("region_inventory").select("*"),
-    supabase.from("pickup_inventory").select("*"),
-  ]);
+  const [regions, pickupLocations, regionInventory, pickupInventory] =
+    await Promise.all([
+      getActiveRegions(),
+      getActivePickupLocations(),
+      getRegionInventory(),
+      getPickupInventory(),
+    ]);
 
   return (
     <ShopContent
