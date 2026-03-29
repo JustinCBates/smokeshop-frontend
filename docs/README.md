@@ -5,3 +5,4 @@ This folder contains setup guides and documentation for the Smokeshop applicatio
 ## Available Guides
 
 - **PRODUCT_IMAGES_SETUP.md** - Complete guide for generating and adding product images
+- **CLOVER_MODULES_REFERENCE.md** - Clover module catalog, JSON shape guidance, and mock usage notes
