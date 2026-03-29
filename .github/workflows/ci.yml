@@ -2,15 +2,15 @@ name: CI - Build & Test
 
 on:
   pull_request:
-    branches: [ build, main ]
+    branches: [build, main]
   push:
-    branches: [ development, build ]
+    branches: [development, build]
 
 jobs:
   build:
     name: Build and Lint
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install pnpm
         uses: pnpm/action-setup@v2

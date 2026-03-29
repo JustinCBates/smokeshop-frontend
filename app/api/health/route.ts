@@ -8,6 +8,6 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV ?? "unknown",
     },
-    { status: 200 }
+    { status: 200 },
   );
 }
