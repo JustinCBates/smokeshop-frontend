@@ -83,8 +83,9 @@ if [ -f /opt/smokeshop/smokeshop-backend/.env.postgres.local ]; then
 fi
 
 if [ -n "$DB_PASS" ]; then
-  sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://smokeshop_user:${DB_PASS}@host.docker.internal:5432/smokeshop|" .env.vps.production
-  sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://smokeshop_user:${DB_PASS}@host.docker.internal:5432/smokeshop|" .env.vps.staging
+  DB_PASS_ENCODED=$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=""))' "$DB_PASS")
+  sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://smokeshop_user:${DB_PASS_ENCODED}@host.docker.internal:5432/smokeshop|" .env.vps.production
+  sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://smokeshop_user:${DB_PASS_ENCODED}@host.docker.internal:5432/smokeshop|" .env.vps.staging
 elif [ -n "${SMOKESHOP_DATABASE_URL:-}" ]; then
   sed -i "s|^DATABASE_URL=.*|DATABASE_URL=${SMOKESHOP_DATABASE_URL}|" .env.vps.production
   sed -i "s|^DATABASE_URL=.*|DATABASE_URL=${SMOKESHOP_DATABASE_URL}|" .env.vps.staging
