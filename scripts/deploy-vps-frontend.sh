@@ -77,10 +77,17 @@ ENV_EOF
   fi
 fi
 
-DB_PASS=$(sed -n "s/^POSTGRES_PASSWORD=//p" /opt/smokeshop/smokeshop-backend/.env.postgres.local)
+DB_PASS=""
+if [ -f /opt/smokeshop/smokeshop-backend/.env.postgres.local ]; then
+  DB_PASS=$(sed -n "s/^POSTGRES_PASSWORD=//p" /opt/smokeshop/smokeshop-backend/.env.postgres.local)
+fi
+
 if [ -n "$DB_PASS" ]; then
   sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://smokeshop_user:${DB_PASS}@host.docker.internal:5432/smokeshop|" .env.vps.production
   sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://smokeshop_user:${DB_PASS}@host.docker.internal:5432/smokeshop|" .env.vps.staging
+elif [ -n "${SMOKESHOP_DATABASE_URL:-}" ]; then
+  sed -i "s|^DATABASE_URL=.*|DATABASE_URL=${SMOKESHOP_DATABASE_URL}|" .env.vps.production
+  sed -i "s|^DATABASE_URL=.*|DATABASE_URL=${SMOKESHOP_DATABASE_URL}|" .env.vps.staging
 fi
 
 if ! grep -q "neutraldevelopment.com, www.neutraldevelopment.com" "$CADDYFILE_PATH"; then

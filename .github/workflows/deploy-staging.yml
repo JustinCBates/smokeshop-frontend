@@ -34,6 +34,7 @@ jobs:
           VPS_SSH_KEY="$HOME/.ssh/id_ed25519" \
           VPS_APP_DIR="/opt/smokeshop/smokeshop-frontend" \
           CADDYFILE_PATH="/opt/patriotic-projects/vscode-proxy/Caddyfile" \
+          SMOKESHOP_DATABASE_URL="${{ secrets.SMOKESHOP_DATABASE_URL }}" \
           bash scripts/deploy-vps-frontend.sh
 
       - name: Verify deployment
