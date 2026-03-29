@@ -6,6 +6,9 @@ type CloverWebhookPayload = {
   merchants?: Record<string, Array<{ objectId: string; type: string; ts: number }>>;
 };
 
+let lastVerificationCode: string | null = null;
+let lastVerificationAt: string | null = null;
+
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
@@ -20,6 +23,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (payload.verificationCode) {
+      lastVerificationCode = payload.verificationCode;
+      lastVerificationAt = new Date().toISOString();
       return NextResponse.json({ verificationCode: payload.verificationCode, verified: true });
     }
 
@@ -33,5 +38,10 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  return NextResponse.json({ status: "ok", service: "clover-webhook" });
+  return NextResponse.json({
+    status: "ok",
+    service: "clover-webhook",
+    lastVerificationCode,
+    lastVerificationAt,
+  });
 }
