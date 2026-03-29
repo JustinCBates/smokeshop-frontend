@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  frontend_prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: smokeshop_frontend_prod
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - .env.vps.production
+    ports:
+      - "3200:3000"
+
+  frontend_staging:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: smokeshop_frontend_staging
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - .env.vps.staging
+    ports:
+      - "3201:3000"
