@@ -3,7 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 type CloverWebhookPayload = {
   verificationCode?: string;
   appId?: string;
-  merchants?: Record<string, Array<{ objectId: string; type: string; ts: number }>>;
+  merchants?: Record<
+    string,
+    Array<{ objectId: string; type: string; ts: number }>
+  >;
 };
 
 let lastVerificationCode: string | null = null;
@@ -18,14 +21,24 @@ export async function POST(req: NextRequest) {
     const cloverAuthHeader = req.headers.get("x-clover-auth");
 
     // Clover sends X-Clover-Auth on verified webhook notifications.
-    if (configuredAuthCode && cloverAuthHeader && cloverAuthHeader !== configuredAuthCode) {
-      return NextResponse.json({ error: "Invalid Clover auth header" }, { status: 401 });
+    if (
+      configuredAuthCode &&
+      cloverAuthHeader &&
+      cloverAuthHeader !== configuredAuthCode
+    ) {
+      return NextResponse.json(
+        { error: "Invalid Clover auth header" },
+        { status: 401 },
+      );
     }
 
     if (payload.verificationCode) {
       lastVerificationCode = payload.verificationCode;
       lastVerificationAt = new Date().toISOString();
-      return NextResponse.json({ verificationCode: payload.verificationCode, verified: true });
+      return NextResponse.json({
+        verificationCode: payload.verificationCode,
+        verified: true,
+      });
     }
 
     return NextResponse.json({ received: true });
