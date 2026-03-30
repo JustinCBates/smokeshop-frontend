@@ -2,8 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "@/lib/location-context";
-import { isPointInRegion, geocodeAddress, type GeoJSONPolygon } from "@/lib/geo-utils";
-import { createClient } from "@/lib/supabase/client";
+import {
+  isPointInRegion,
+  geocodeAddress,
+  type GeoJSONPolygon,
+} from "@/lib/geo-utils";
 import dynamic from "next/dynamic";
 import { MapPin, Truck, Store, Search, X, Loader2 } from "lucide-react";
 
@@ -40,18 +43,24 @@ export default function LocationSelector({
   const [address, setAddress] = useState("");
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"delivery" | "pickup">(location.fulfillmentType);
-  const [geocoded, setGeocoded] = useState<{ lat: number; lng: number } | null>(null);
+  const [tab, setTab] = useState<"delivery" | "pickup">(
+    location.fulfillmentType,
+  );
+  const [geocoded, setGeocoded] = useState<{ lat: number; lng: number } | null>(
+    null,
+  );
 
   useEffect(() => {
-    const supabase = createClient();
     async function load() {
-      const [{ data: r }, { data: p }] = await Promise.all([
-        supabase.from("regions").select("*").eq("is_active", true),
-        supabase.from("pickup_locations").select("*").eq("is_active", true),
-      ]);
-      if (r) setRegions(r);
-      if (p) setPickupLocations(p);
+      try {
+        const res = await fetch("/api/locations");
+        if (!res.ok) return;
+        const payload = await res.json();
+        setRegions(payload.regions || []);
+        setPickupLocations(payload.pickupLocations || []);
+      } catch {
+        // Keep default empty lists so UI remains usable.
+      }
     }
     load();
   }, []);
@@ -71,7 +80,7 @@ export default function LocationSelector({
 
       if (tab === "delivery") {
         const matched = regions.find((r) =>
-          isPointInRegion(result.lat, result.lng, r.boundary as GeoJSONPolygon)
+          isPointInRegion(result.lat, result.lng, r.boundary as GeoJSONPolygon),
         );
         if (matched) {
           location.setCustomerCoords(result.lat, result.lng, result.display);
@@ -80,7 +89,7 @@ export default function LocationSelector({
           onClose();
         } else {
           setError(
-            "Sorry, delivery is not available in your area yet. Try pickup instead."
+            "Sorry, delivery is not available in your area yet. Try pickup instead.",
           );
         }
       }
@@ -97,7 +106,7 @@ export default function LocationSelector({
       location.setCustomerCoords(pl.lat, pl.lng, pl.address);
       onClose();
     },
-    [location, onClose]
+    [location, onClose],
   );
 
   if (!open) return null;
@@ -174,9 +183,7 @@ export default function LocationSelector({
                   Search
                 </button>
               </div>
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
+              {error && <p className="text-sm text-destructive">{error}</p>}
               <div className="h-64 overflow-hidden rounded-lg border border-border">
                 <LeafletMap
                   regions={regions}

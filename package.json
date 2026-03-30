@@ -16,8 +16,6 @@
   },
   "dependencies": {
     "@paypal/react-paypal-js": "latest",
-    "@supabase/ssr": "latest",
-    "@supabase/supabase-js": "latest",
     "@turf/boolean-point-in-polygon": "latest",
     "@turf/helpers": "latest",
     "@types/leaflet": "latest",

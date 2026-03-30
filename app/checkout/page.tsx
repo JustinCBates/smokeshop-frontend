@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import { useLocation } from "@/lib/location-context";
-import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 import LocationSelector from "@/components/modals/location-selector";
 import {
@@ -36,7 +35,9 @@ export default function CheckoutPage() {
   const location = useLocation();
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [feeTiers, setFeeTiers] = useState<DeliveryFeeTier[]>([]);
-  const [selectedTier, setSelectedTier] = useState<DeliveryFeeTier | null>(null);
+  const [selectedTier, setSelectedTier] = useState<DeliveryFeeTier | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [error, setError] = useState("");
@@ -46,26 +47,29 @@ export default function CheckoutPage() {
   const [guestName, setGuestName] = useState("");
 
   const taxRate = 0.0823; // MO avg sales tax
-  const deliveryFee = location.fulfillmentType === "delivery" && selectedTier
-    ? selectedTier.fee_cents
-    : 0;
+  const deliveryFee =
+    location.fulfillmentType === "delivery" && selectedTier
+      ? selectedTier.fee_cents
+      : 0;
   const taxCents = Math.round(subtotalCents * taxRate);
   const totalCents = subtotalCents + deliveryFee + taxCents;
 
   useEffect(() => {
     if (location.region && location.fulfillmentType === "delivery") {
-      const supabase = createClient();
-      supabase
-        .from("delivery_fee_tiers")
-        .select("*")
-        .eq("region_id", location.region.id)
-        .eq("is_active", true)
-        .order("sort_order")
-        .then(({ data }) => {
-          if (data && data.length > 0) {
+      fetch(`/api/delivery-fee-tiers?region_id=${location.region.id}`)
+        .then(async (res) => {
+          if (!res.ok) return null;
+          return res.json();
+        })
+        .then((payload) => {
+          const data = payload?.tiers || [];
+          if (data.length > 0) {
             setFeeTiers(data);
-            setSelectedTier(data[data.length - 1]); // Default to cheapest
+            setSelectedTier(data[data.length - 1]);
           }
+        })
+        .catch(() => {
+          // Keep checkout available even if fee tier lookup fails.
         });
     }
   }, [location.region, location.fulfillmentType]);
@@ -83,7 +87,7 @@ export default function CheckoutPage() {
       setError("Please set your location first.");
       return;
     }
-    
+
     // Validate guest info if checking out as guest
     if (isGuest) {
       if (!guestEmail || !guestName) {
@@ -226,46 +230,45 @@ export default function CheckoutPage() {
             </div>
 
             {/* Delivery fee tier selection */}
-            {location.fulfillmentType === "delivery" &&
-              feeTiers.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  <p className="text-sm font-medium text-foreground">
-                    Delivery Speed
-                  </p>
-                  {feeTiers.map((tier) => (
-                    <label
-                      key={tier.id}
-                      className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors ${
-                        selectedTier?.id === tier.id
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/40"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="radio"
-                          name="delivery-tier"
-                          checked={selectedTier?.id === tier.id}
-                          onChange={() => setSelectedTier(tier)}
-                          className="accent-primary"
-                        />
-                        <div>
-                          <p className="text-sm font-medium text-foreground">
-                            {tier.tier_name}
-                          </p>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            {tier.description}
-                          </div>
+            {location.fulfillmentType === "delivery" && feeTiers.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <p className="text-sm font-medium text-foreground">
+                  Delivery Speed
+                </p>
+                {feeTiers.map((tier) => (
+                  <label
+                    key={tier.id}
+                    className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors ${
+                      selectedTier?.id === tier.id
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/40"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="delivery-tier"
+                        checked={selectedTier?.id === tier.id}
+                        onChange={() => setSelectedTier(tier)}
+                        className="accent-primary"
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          {tier.tier_name}
+                        </p>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          {tier.description}
                         </div>
                       </div>
-                      <span className="text-sm font-semibold text-primary">
-                        {formatCurrency(tier.fee_cents)}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
+                    </div>
+                    <span className="text-sm font-semibold text-primary">
+                      {formatCurrency(tier.fee_cents)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
           </section>
 
           {/* Guest Checkout */}
@@ -324,7 +327,8 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      Phone <span className="text-muted-foreground">(optional)</span>
+                      Phone{" "}
+                      <span className="text-muted-foreground">(optional)</span>
                     </label>
                     <input
                       type="tel"
@@ -368,7 +372,8 @@ export default function CheckoutPage() {
                   I confirm I am 21 years of age or older
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  You may be asked to present a valid ID upon delivery or pickup.
+                  You may be asked to present a valid ID upon delivery or
+                  pickup.
                 </p>
               </div>
             </label>
@@ -442,9 +447,7 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {error && (
-              <p className="mt-4 text-sm text-destructive">{error}</p>
-            )}
+            {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
 
             <button
               onClick={handleCheckout}
