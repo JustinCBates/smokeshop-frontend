@@ -82,8 +82,7 @@ export async function getCloverShopProducts(params: {
 
   const accessToken = process.env.CLOVER_ACCESS_TOKEN;
   const merchantId = process.env.CLOVER_MERCHANT_ID;
-  const baseUrl =
-    process.env.CLOVER_API_BASE_URL || "https://apisandbox.dev.clover.com";
+  const baseUrl = process.env.CLOVER_API_BASE_URL || "https://api.clover.com";
 
   if (!accessToken || !merchantId) {
     return null;
