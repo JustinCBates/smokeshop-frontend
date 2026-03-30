@@ -1,35 +1,14 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useState, useEffect } from "react"
-import { createClient } from "@/lib/supabase/client"
-import { siteConfig } from "@/lib/site-config"
-import { ShoppingCart, Menu, X, User, LogOut } from "lucide-react"
-import { useCart } from "@/lib/cart-context"
-import type { User as SupaUser } from "@supabase/supabase-js"
+import Link from "next/link";
+import { useState } from "react";
+import { siteConfig } from "@/lib/site-config";
+import { ShoppingCart, Menu, X } from "lucide-react";
+import { useCart } from "@/lib/cart-context";
 
 export function Header() {
-  const [user, setUser] = useState<SupaUser | null>(null)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const { itemCount } = useCart()
-
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    setUser(null)
-    window.location.href = "/"
-  }
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { itemCount } = useCart();
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
@@ -84,30 +63,12 @@ export function Header() {
             )}
           </Link>
 
-          {user ? (
-            <div className="hidden items-center gap-3 md:flex">
-              <Link
-                href="/account"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <User className="h-5 w-5" />
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="text-muted-foreground transition-colors hover:text-foreground"
-                aria-label="Sign out"
-              >
-                <LogOut className="h-5 w-5" />
-              </button>
-            </div>
-          ) : (
-            <Link
-              href="/auth/login"
-              className="hidden rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 md:block"
-            >
-              Sign In
-            </Link>
-          )}
+          <Link
+            href="/auth/login"
+            className="hidden rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 md:block"
+          >
+            Account
+          </Link>
 
           {/* Mobile menu toggle */}
           <button
@@ -115,7 +76,11 @@ export function Header() {
             className="text-muted-foreground md:hidden"
             aria-label="Toggle menu"
           >
-            {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {menuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
           </button>
         </div>
       </div>
@@ -142,37 +107,16 @@ export function Header() {
               </Link>
             ))}
             <hr className="border-border" />
-            {user ? (
-              <>
-                <Link
-                  href="/account"
-                  onClick={() => setMenuOpen(false)}
-                  className="text-sm text-muted-foreground"
-                >
-                  My Account
-                </Link>
-                <button
-                  onClick={() => {
-                    handleSignOut()
-                    setMenuOpen(false)
-                  }}
-                  className="text-left text-sm text-muted-foreground"
-                >
-                  Sign Out
-                </button>
-              </>
-            ) : (
-              <Link
-                href="/auth/login"
-                onClick={() => setMenuOpen(false)}
-                className="text-sm font-medium text-primary"
-              >
-                Sign In
-              </Link>
-            )}
+            <Link
+              href="/auth/login"
+              onClick={() => setMenuOpen(false)}
+              className="text-sm font-medium text-primary"
+            >
+              Account
+            </Link>
           </nav>
         </div>
       )}
     </header>
-  )
+  );
 }

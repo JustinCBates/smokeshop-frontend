@@ -22,8 +22,8 @@ fi
 # Load environment variables
 source .env.local 2>/dev/null || true
 
-if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ]; then
-    echo "❌ Error: NEXT_PUBLIC_SUPABASE_URL not set in .env.local"
+if [ -z "$DATABASE_URL" ]; then
+    echo "❌ Error: DATABASE_URL not set in .env.local"
     exit 1
 fi
 
