@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - build
+      - main
   push:
     branches:
       - development
