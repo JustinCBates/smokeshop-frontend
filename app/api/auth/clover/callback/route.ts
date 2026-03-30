@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const DEFAULT_CLOVER_OAUTH_BASE_URL = "https://sandbox.dev.clover.com";
+const DEFAULT_CLOVER_OAUTH_BASE_URL = "https://www.clover.com";
 
 function getRedirectUri(request: NextRequest): string {
   return (
