@@ -124,6 +124,7 @@ for key in CLOVER_APP_ID CLOVER_APP_SECRET CLOVER_ACCESS_TOKEN CLOVER_MERCHANT_I
 done
 
 if ! grep -Fq "neutraldevelopment.com, www.neutraldevelopment.com {" "$CADDYFILE_PATH"; then
+
 cat >> "$CADDYFILE_PATH" <<"CADDY_EOF"
 
 neutraldevelopment.com, www.neutraldevelopment.com {
