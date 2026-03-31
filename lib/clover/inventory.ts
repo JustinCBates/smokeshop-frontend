@@ -84,14 +84,14 @@ export async function getCloverShopProducts(params: {
   const merchantId = process.env.CLOVER_MERCHANT_ID;
   const baseUrl = process.env.CLOVER_API_BASE_URL || "https://api.clover.com";
 
-  if (!accessToken || !merchantId) {
+  if (!merchantId) {
     return null;
   }
 
   const url = `${baseUrl}/v3/merchants/${merchantId}/items?limit=1000`;
   const response = await fetch(url, {
     headers: {
-      Authorization: `Bearer ${accessToken}`,
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       Accept: "application/json",
     },
     cache: "no-store",
