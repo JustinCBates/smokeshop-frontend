@@ -16,6 +16,7 @@ export interface ShopProductRecord {
   in_stock: boolean;
   delivery_eligible: boolean;
   featured: boolean;
+  tags: string[] | null;
 }
 
 function inferCategoryFromSku(sku: string): string {
@@ -53,6 +54,7 @@ function toShopProduct(item: CloverItem): ShopProductRecord {
     in_stock: inStock,
     delivery_eligible: true,
     featured: false,
+    tags: null,
   };
 }
 

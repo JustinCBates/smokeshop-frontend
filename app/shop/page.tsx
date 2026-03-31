@@ -1,4 +1,5 @@
 import { getCloverShopProducts } from "@/lib/clover/inventory";
+import type { ShopProductRecord } from "@/lib/clover/inventory";
 import { siteConfig } from "@/lib/site-config";
 import { ShopContent } from "./shop-content";
 import type { Metadata } from "next";
@@ -18,7 +19,7 @@ export default async function ShopPage({
 }) {
   const params = await searchParams;
 
-  let products = [];
+  let products: ShopProductRecord[] = [];
 
   try {
     const cloverProducts = await getCloverShopProducts({
