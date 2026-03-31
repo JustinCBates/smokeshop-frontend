@@ -11,8 +11,10 @@
     "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",
     "check-all": "npm run type-check && npm run lint",
+    "ci:rig": "npm run lint && npm run type-check && npm run build",
     "migrate": "node scripts/run-migrations.js",
-    "setup": "node scripts/run-migrations.js && npm run build"
+    "setup": "node scripts/run-migrations.js && npm run build",
+    "prepare": "husky"
   },
   "dependencies": {
     "@paypal/react-paypal-js": "latest",
@@ -28,8 +30,8 @@
     "react": "^19",
     "react-dom": "^19",
     "react-leaflet": "latest",
-    "swagger-ui-react": "^5.17.14",
     "server-only": "latest",
+    "swagger-ui-react": "^5.17.14",
     "swr": "latest",
     "tailwind-merge": "latest",
     "tailwindcss": "^3"
@@ -39,11 +41,12 @@
     "@types/pg": "^8.11.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@typescript-eslint/eslint-plugin": "^7",
+    "@typescript-eslint/parser": "^7",
     "autoprefixer": "^10",
     "eslint": "^8",
     "eslint-config-next": "^15",
-    "@typescript-eslint/eslint-plugin": "^7",
-    "@typescript-eslint/parser": "^7",
+    "husky": "^9.1.7",
     "postcss": "^8",
     "typescript": "^5"
   }
