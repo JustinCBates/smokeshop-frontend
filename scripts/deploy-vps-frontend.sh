@@ -24,27 +24,6 @@ if ! command -v git >/dev/null 2>&1; then
   exit 1
 fi
 
-retry_command() {
-  local attempts="$1"
-  local sleep_seconds="$2"
-  shift 2
-
-  local try
-  for try in $(seq 1 "$attempts"); do
-    if "$@"; then
-      return 0
-    fi
-
-    if [ "$try" -lt "$attempts" ]; then
-      echo "Command failed (attempt ${try}/${attempts}); retrying in ${sleep_seconds}s..."
-      sleep "$sleep_seconds"
-    fi
-  done
-
-  echo "Command failed after ${attempts} attempts."
-  return 1
-}
-
 echo "Syncing tracked frontend files to VPS (excluding local artifacts)..."
 SYNC_LIST="$(mktemp)"
 trap 'rm -f "$SYNC_LIST"' EXIT
@@ -59,13 +38,13 @@ for required in Dockerfile.prod docker-compose.vps.yml .env.vps.production.examp
   fi
 done
 
-retry_command 3 10 rsync -avz --delete --prune-empty-dirs \
+rsync -avz --delete --prune-empty-dirs \
   -e "ssh -i $VPS_SSH_KEY -p $VPS_PORT -o StrictHostKeyChecking=accept-new" \
   --files-from "$SYNC_LIST" \
   ./ "$VPS_USER@$VPS_HOST:$VPS_APP_DIR/"
 
 echo "Preparing environment files, Caddy routes, and starting containers..."
-retry_command 3 10 ssh -i "$VPS_SSH_KEY" -p "$VPS_PORT" -o StrictHostKeyChecking=accept-new "$VPS_USER@$VPS_HOST" \
+ssh -i "$VPS_SSH_KEY" -p "$VPS_PORT" -o StrictHostKeyChecking=accept-new "$VPS_USER@$VPS_HOST" \
   "CADDYFILE_PATH='$CADDYFILE_PATH' VPS_APP_DIR='$VPS_APP_DIR' SMOKESHOP_DATABASE_URL='${SMOKESHOP_DATABASE_URL:-}' CLOVER_APP_ID='${CLOVER_APP_ID:-}' CLOVER_APP_SECRET='${CLOVER_APP_SECRET:-}' CLOVER_ACCESS_TOKEN='${CLOVER_ACCESS_TOKEN:-}' CLOVER_MERCHANT_ID='${CLOVER_MERCHANT_ID:-}' CLOVER_WEBHOOK_SECRET='${CLOVER_WEBHOOK_SECRET:-}' CLOVER_OAUTH_BASE_URL='${CLOVER_OAUTH_BASE_URL:-https://www.clover.com}' CLOVER_API_BASE_URL='${CLOVER_API_BASE_URL:-https://api.clover.com}' CLOVER_REDIRECT_URI='${CLOVER_REDIRECT_URI:-}' bash -s" <<'EOF'
 set -euo pipefail
 
@@ -81,7 +60,8 @@ upsert_env_value() {
   if [ -f "$file" ]; then
     grep -v "^${key}=" "$file" > "$tmp_file" || true
   fi
-  printf '%s=%s\n' "$key" "$value" >> "$tmp_file"
+  printf '%s=%s
+' "$key" "$value" >> "$tmp_file"
   mv "$tmp_file" "$file"
 }
 
@@ -143,40 +123,29 @@ for key in CLOVER_APP_ID CLOVER_APP_SECRET CLOVER_ACCESS_TOKEN CLOVER_MERCHANT_I
   fi
 done
 
-ensure_caddy_site_block() {
-  local site_label="$1"
-  local upstream="$2"
-  local tmp_file
+if ! grep -Fq "neutraldevelopment.com, www.neutraldevelopment.com {" "$CADDYFILE_PATH"; then
 
-  tmp_file="$(mktemp)"
-  awk -v site="${site_label} {" '
-    BEGIN { skipping = 0 }
-    $0 == site {
-      skipping = 1
-      next
-    }
-    skipping && $0 == "}" {
-      skipping = 0
-      next
-    }
-    skipping { next }
-    { print }
-  ' "$CADDYFILE_PATH" > "$tmp_file"
-  mv "$tmp_file" "$CADDYFILE_PATH"
+cat >> "$CADDYFILE_PATH" <<"CADDY_EOF"
 
-  cat >> "$CADDYFILE_PATH" <<CADDY_EOF
-
-${site_label} {
+neutraldevelopment.com, www.neutraldevelopment.com {
     encode gzip
-    reverse_proxy http://127.0.0.1:${upstream}
+    reverse_proxy http://127.0.0.1:3200
     log
 }
 
 CADDY_EOF
-}
+fi
 
-ensure_caddy_site_block "neutraldevelopment.com, www.neutraldevelopment.com" "3200"
-ensure_caddy_site_block "staging.neutraldevelopment.com" "3201"
+if ! grep -Fq "staging.neutraldevelopment.com {" "$CADDYFILE_PATH"; then
+cat >> "$CADDYFILE_PATH" <<"CADDY_EOF"
+
+staging.neutraldevelopment.com {
+    encode gzip
+    reverse_proxy http://127.0.0.1:3201
+    log
+}
+CADDY_EOF
+fi
 
 docker compose -f docker-compose.vps.yml up -d --build
 docker restart vscode-caddy
