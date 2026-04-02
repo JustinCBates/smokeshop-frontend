@@ -1,9 +1,12 @@
 name: Deploy to Staging
 
 on:
-  push:
-    branches: [build]
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to deploy to staging
+        required: false
+        default: main
 
 jobs:
   deploy:
@@ -14,7 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ inputs.ref }}
 
       - name: Setup SSH key
         run: |
